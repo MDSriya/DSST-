@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Emoji Substitution Game</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      padding: 20px;
+      background: #f0f0f0;
+    }
+    h1 {
+      font-size: 1.5em;
+    }
+    .legend {
+      margin: 20px 0;
+      font-size: 1.8em;
+      padding: 10px;
+      background: #ffffff;
+      border: 2px solid #ccc;
+      border-radius: 10px;
+      display: inline-block;
+    }
+    .sequence, .choices, .info {
+      margin: 20px 0;
+      font-size: 1.8em;
+    }
+    .emoji-button {
+      font-size: 2em;
+      padding: 10px 20px;
+      margin: 5px;
+      cursor: pointer;
+      border: none;
+      border-radius: 10px;
+      background: white;
+      box-shadow: 2px 2px 5px #aaa;
+    }
+    .emoji-button:active {
+      background: #ddd;
+    }
+    #result {
+      font-size: 1.2em;
+      margin-top: 20px;
+      color: green;
+    }
+  </style>
+</head>
+<body>
+  <h1>Emoji Digit Substitution</h1>
+
+  <div class="legend" id="legend"></div>
+  <div class="sequence" id="sequence"></div>
+  <div class="choices" id="choices"></div>
+  <div class="info">
+    ⏳ Time left: <span id="time">90</span>s |
+    ✅ Score: <span id="score">0</span> |
+    🔁 Trial: <span id="trial">0</span>/100
+  </div>
+  <div id="result"></div>
+
+  <script>
+const digitEmojiMap = {
+  1: "😊", 2: "🚀", 3: "🍕", 4: "🐱", 5: "🌈", 6: "⚽", 7: "🎸", 8: "📚", 9: "🌟"
+};
+const legendDiv = document.getElementById("legend");
+const sequenceDiv = document.getElementById("sequence");
+const choicesDiv = document.getElementById("choices");
+const resultDiv = document.getElementById("result");
+const timeSpan = document.getElementById("time");
+const scoreSpan = document.getElementById("score");
+const trialSpan = document.getElementById("trial");
+
+let currentSequence = [];
+let userInputs = [];
+let score = 0;
+let trial = 0;
+const maxTrials = 100;
+let timeLeft = 90;
+let timer;
+
+function shuffle(array) {
+  return array.sort(() => Math.random() - 0.5);
+}
+function generateSequence(length = 3) {
+  const digits = Object.keys(digitEmojiMap);
+  return Array.from({ length }, () => digits[Math.floor(Math.random() * digits.length)]);
+}
+function showLegend() {
+  legendDiv.innerHTML = Object.entries(digitEmojiMap)
+    .map(([digit, emoji]) => `${digit}: ${emoji}`)
+    .join("  ");
+}
+function showSequence() {
+  sequenceDiv.textContent = "Sequence: " + currentSequence.join(" ");
+}
+function showChoices() {
+  choicesDiv.innerHTML = "";
+  const emojis = Object.values(digitEmojiMap);
+  shuffle(emojis).forEach(emoji => {
+    const btn = document.createElement("button");
+    btn.className = "emoji-button";
+    btn.textContent = emoji;
+    btn.onclick = () => handleClick(emoji);
+    choicesDiv.appendChild(btn);
+  });
+}
+function handleClick(selectedEmoji) {
+  userInputs.push(selectedEmoji);
+  if (userInputs.length === currentSequence.length) {
+    const correctEmojis = currentSequence.map(d => digitEmojiMap[d]);
+    const isCorrect = userInputs.every((emoji, i) => emoji === correctEmojis[i]);
+    trial++;
+    trialSpan.textContent = trial;
+    if (isCorrect) {
+      score++;
+      scoreSpan.textContent = score;
+    }
+    if (trial >= maxTrials) {
+      endGame();
+    } else {
+      userInputs = [];
+      resultDiv.textContent = "";
+      setTimeout(startRound, 300);
+    }
+  }
+}
+function startRound() {
+  currentSequence = generateSequence();
+  userInputs = [];
+  showSequence();
+  showChoices();
+}
+function startTimer() {
+  timer = setInterval(() => {
+    timeLeft--;
+    timeSpan.textContent = timeLeft;
+    if (timeLeft <= 0) {
+      endGame();
+    }
+  }, 1000);
+}
+function endGame() {
+  clearInterval(timer);
+  choicesDiv.innerHTML = "";
+  sequenceDiv.textContent = "";
+  resultDiv.innerHTML = `🏁 Game Over!<br>✅ Final Score: <strong>${score}</strong> out of ${trial} trials.`;
+  setTimeout(() => {
+    window.close(); // attempt to close if allowed
+  }, 3000);
+}
+function startGame() {
+  score = 0;
+  trial = 0;
+  timeLeft = 90;
+  scoreSpan.textContent = score;
+  trialSpan.textContent = trial;
+  timeSpan.textContent = timeLeft;
+  startTimer();
+  startRound();
+}
+showLegend();
+startGame();
+</script>
+</body>
+</html>
